@@ -7,10 +7,11 @@
 //
 
 import UIKit
+import CoreData
 
 class TableViewController: UITableViewController {
 
-    var toDoItems = [String]()
+    var toDoItems: [Task] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -21,7 +22,8 @@ class TableViewController: UITableViewController {
         let alertController = UIAlertController(title: "Add Task", message: "add new task", preferredStyle: .alert)
         let okAction = UIAlertAction(title: "OK", style: .default) { (action) in
             let textField = alertController.textFields?[0]
-            self.toDoItems.insert((textField?.text)!, at: 0)
+            self.saveTask(taskToDo: (textField?.text)!)
+    
             self.tableView.reloadData()
         }
         let cancelAction = UIAlertAction(title: "Cancel", style: .default, handler: nil)
@@ -32,6 +34,23 @@ class TableViewController: UITableViewController {
         alertController.addAction(cancelAction)
         
         present(alertController, animated: true)
+    }
+    
+    private func saveTask(taskToDo: String) {
+        
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let contex = appDelegate.persistentContainer.viewContext
+        let entity = NSEntityDescription.entity(forEntityName: "Task", in: contex)
+        let taskObject = NSManagedObject(entity: entity!, insertInto: contex) as! Task
+        taskObject.taskToDo = taskToDo
+        
+        do {
+            try contex.save()
+            toDoItems.append(taskObject)
+            print("saved taskToDo!")
+        } catch {
+            print("error", error.localizedDescription)
+        }
     }
     
     // MARK: - Table view data source
@@ -48,7 +67,9 @@ class TableViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        cell.textLabel?.text = toDoItems[indexPath.row]
+        
+        let task = toDoItems[indexPath.row]
+        cell.textLabel?.text = task.taskToDo
         return cell
     }
 
